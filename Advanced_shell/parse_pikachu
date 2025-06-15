@@ -1,0 +1,5 @@
+#!/bin/bash
+
+jq -r '
+  "\(.name) is of type \(.types[0].type.name | ascii_upcase), weighs \(.weight / 10)kg, and is \(.height / 10)m tall."
+' data.json | sed 's/^\(.\)/\U\1/'
