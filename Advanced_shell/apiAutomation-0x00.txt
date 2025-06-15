@@ -1,0 +1,3 @@
+#!/bin/bash
+
+curl -sSf https://pokeapi.co/api/v2/pokemon/pikachu -o data.json || echo "Failed to fetch data at $(date)" >> errors.txt
