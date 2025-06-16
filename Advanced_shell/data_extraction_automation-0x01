@@ -1,17 +1,10 @@
 #!/bin/bash
 
-# Use jq to extract the required fields from the JSON file
-jq -r '[
-    .name,
-    (.types[] | .type.name) // empty,
-    .weight,
-    .height
-] | @tsv' pokemon_data.json | \
-awk -F'\t' '{
-    # Convert weight from hectograms to kilograms (divide by 10)
-    weight_kg = $3 / 10;
-    # Convert height from decimeters to meters (divide by 10)
-    height_m = $4 / 10;
-    # Format the output string
-    printf "%s is of type %s, weighs %dkg, and is %.1fm tall.\n", $1, $2, weight_kg, height_m;
-}'
+# Extract values using jq
+name=$(jq -r '.name' data.json | sed 's/.*/\u&/')
+type=$(jq -r '.types[0].type.name' data.json | sed 's/.*/\u&/')
+weight=$(jq '.weight' data.json | awk '{ printf "%.1f", $1 / 10 }')
+height=$(jq '.height' data.json | awk '{ printf "%.1f", $1 / 10 }')
+
+# Print formatted sentence
+echo "$name is of type $type, weighs ${weight}kg, and is ${height}m tall."
