@@ -1,5 +1,10 @@
 #!/bin/bash
 
-jq -r '
-  "\(.name) is of type \(.types[0].type.name | ascii_upcase), weighs \(.weight / 10)kg, and is \(.height / 10)m tall."
-' data.json | sed 's/^\(.\)/\U\1/'
+jq -r '.name, .types[0].type.name, .weight, .height' data.json |
+awk 'NR==1 {name=$0}
+     NR==2 {type=toupper(substr($0,1,1)) substr($0,2); type=substr($0,1,1) toupper(substr($0,2)); type=$0}
+     NR==3 {weight=$0/10}
+     NR==4 {height=$0/10}
+     END {
+         printf "%s is of type %s, weighs %.0fkg, and is %.1fm tall.\n", name, type, weight, height
+     }'
