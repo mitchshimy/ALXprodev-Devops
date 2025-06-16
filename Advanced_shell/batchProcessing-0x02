@@ -1,26 +1,41 @@
 #!/bin/bash
 
-# Create directory if it doesn't exist
+# Directory to store data
 mkdir -p pokemon_data
 
-# List of Pokémon
-pokemon_list=(bulbasaur ivysaur venusaur charmander charmeleon)
+# List of Pokémon to fetch
+pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+# Base API endpoint
+api_url="https://pokeapi.co/api/v2/pokemon"
 
 # Loop through each Pokémon
-for pokemon in "${pokemon_list[@]}"; do
-    echo "Fetching data for $pokemon..."
+for name in "${pokemon_list[@]}"; do
+    echo "Fetching data for $name..."
+    retries=0
+    max_retries=3
+    success=false
 
-    # API request
-    response=$(curl -s -w "%{http_code}" "https://pokeapi.co/api/v2/pokemon/$pokemon" -o "pokemon_data/${pokemon}.json")
+    while [ $retries -lt $max_retries ]; do
+        # Make the API request
+        response=$(curl -s -w "%{http_code}" -o "pokemon_data/$name.json" "$api_url/$name")
 
-    # Check status code (last 3 digits of response)
-    if [[ "$response" == *200 ]]; then
-        echo "Saved data to pokemon_data/${pokemon}.json ✅"
-    else
-        echo "Error fetching data for $pokemon. Status code: ${response}" >> errors.txt
-        rm -f "pokemon_data/${pokemon}.json"
+        # Extract the HTTP status code
+        status_code="${response: -3}"
+
+        if [[ "$status_code" == "200" ]]; then
+            echo "Saved data to pokemon_data/$name.json ✅"
+            success=true
+            break
+        else
+            ((retries++))
+            echo "Attempt $retries failed for $name (Status: $status_code)"
+            sleep 1  # delay between retries
+        fi
+    done
+
+    if [ "$success" = false ]; then
+        echo "Failed to fetch $name after $max_retries attempts." >> fetch_errors.log
+        echo "Logged error for $name ❌"
     fi
-
-    # Delay to avoid rate-limiting
-    sleep 1
 done
